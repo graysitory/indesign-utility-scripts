@@ -73,11 +73,27 @@ function buildWindow(myWindow) {
             myDescriptionPanel.add("statictext", undefined, myDescription);
             myDescriptionPanel.preferredSize = myPreferredSize;
             myDescriptionPanel.alignChildren = "left";
+            
+      var myStyleCheckbox = myWindow.add("checkbox", undefined, "Assign paragraph style to text.");
+             myStyleCheckbox.value = true; // set default value to true
+             
+             
+        myStyleCheckbox.onClick = function() {
+                
+                if (myStyleCheckbox.value == true) {
+                    myDropdownPanel.enabled = true;
+                    } else {
+                     myDropdownPanel.enabled = false;
+                     }
+                 
+                 myWindow.update();
+            
+            }
      
          
 
     var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
-    var myDropdownGroup = myWindow.add("dropdownlist", undefined, myDropdownOptions);
+    var myDropdownGroup = myDropdownPanel.add("dropdownlist", undefined, myDropdownOptions);
             
             myDropdownGroup.onChange = function() {
                 myDropdownSelection = myDropdownGroup.selection.index; // chagne global variable to index of seleted option on change.
