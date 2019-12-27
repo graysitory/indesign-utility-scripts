@@ -127,7 +127,7 @@ function buildWindow(myWindow) {
   var myShowListsCheckbox = myOptionsOnlyShowListsGroup.add("checkbox", undefined, "Only show numbered or bullet list styles.");
       myOptionsOnlyShowListsGroup.alignment = "right";
 
-  // set default value to true
+  // set default checkbox values to true
   myAssignStyleCheckbox.value = true;
   myShowListsCheckbox.value = true;
   
@@ -137,7 +137,7 @@ function buildWindow(myWindow) {
    populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles)) // inital populate dropdown
    
    
-    myShowListsCheckbox.onClick = function() {
+    myShowListsCheckbox.onClick = function() { // watch for changes to checkbox and change dropdown accordingly
             if (myShowListsCheckbox.value == true) {
                   populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles))
                 } else {
@@ -145,10 +145,7 @@ function buildWindow(myWindow) {
                     }
         }
 
-
-
-    
-                      myDropdownGroup.onChange = function() {
+      myDropdownGroup.onChange = function() {
     myDropdownSelection = myDropdownGroup.selection.index; // chagne global variable to index of seleted option on change.
   };
 
@@ -182,6 +179,7 @@ function main() {
     } else {
       myChangeGrep(mySelection); // run grep to remove leading numbers
       var paragraphStyleToApply = myParagraphStyles.itemByName(myDropdownOptions[myDropdownSelection]); // get paragraph style object by name from the myDropdownOptions Array
+      
       mySelection.applyParagraphStyle(paragraphStyleToApply); // apply paragraph style to selection.
     }
 
