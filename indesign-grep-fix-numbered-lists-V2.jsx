@@ -82,13 +82,15 @@ function getParagraphsByName(myParagraphStyles) { // get all paragraph style nam
   return paragraphsByName;
 }
 
-function populateDropdown(targetDropdown, itemArr) {
+function populateDropdown(targetDropdown, itemArr) { // populate the paragraph style select dropdown
     
         targetDropdown.removeAll(); // remove all children
         
         for (var i = 0; i < itemArr.length; i++) { 
                targetDropdown.add("item", itemArr[i]); // populate list with new values
             }
+        
+        targetDropdown.selection = 0; // set default value for dropdown list
     }
 
 
