@@ -1,139 +1,170 @@
-﻿
-
-// TODO: check for active document; selected text. 
+//https://www.typefi.com/extendscriptAPI/indesign/#GroupSUI.html
+// TODO: check for active document; selected text.
 // TODO: provide checkbox option for whether or not to replace with style
+// TODO: provide option to only show numbered/bullet lists; re-get paragraph styles if so
+// TODO: Create a "notes" button with longer description of function...use active/inactive window?
 
-var myVersion = "0.1";
+var myVersion = "0.4";
 var myName = "Numbered List Fixer - Version " + myVersion;
-var myDescription = "Find lists in which people have actually typed a number followed by a period followed by a space.";
+var myDescription = "Formats numbered lists copied to InDesign that retained leading digits, for example: \r\r    1) line of text \r    2) line of text \r\rScript will remove leading digits and apply the selected number/list style.";
 var myNotes = ""
 var grepFindString = {findWhat: "^\\d+(\\.)?(\\))?([ \\t])"};
 var grepChangeString = {changeTo: ""};
 
 // make sure a document is open and set the active one to the target document.
 if (app.documents.length > 0) {
-    var myDoc = app.activeDocument;
+  var myDoc = app.activeDocument;
 } else {
-    alert("Please make sure a document is open, select the text you want to clean up, and run this script again.");
-    exit(0);
-    }
+  alert("Please make sure a document is open, select the text you want to clean up, and run this script again.");
+  exit(0);
+}
 
 var myParagraphStyles = myDoc.paragraphStyles; // get all paragraph styles in the document
 var myDropdownOptions = getParagraphsByName(myParagraphStyles); // get names of all paragraph styles
-var myDropdownSelection; 
+var myDropdownSelection;
 
 
 function myChangeGrep(mySelection) {
-   
-             // http://jongware.mit.edu/idcs6js/pc_Application.html#changeGrep
-            
-            // clear find preferences
-            app.findGrepPreferences = NothingEnum.nothing;
-            app.changeGrepPreferences = NothingEnum.nothing;
-            
-            
-            // set find preferences
-            app.findGrepPreferences.properties = grepFindString; 
-            app.changeGrepPreferences.properties = grepChangeString;
-            
-            // Run grep find/change on selection
-            mySelection.changeGrep();    
-            
-            // clear find preferences
-            app.findGrepPreferences = NothingEnum.nothing;
-            app.changeGrepPreferences = NothingEnum.nothing;
-    
-    }
+
+  // http://jongware.mit.edu/idcs6js/pc_Application.html#changeGrep
+
+  // clear find preferences
+  app.findGrepPreferences = NothingEnum.nothing;
+  app.changeGrepPreferences = NothingEnum.nothing;
+
+
+  // set find preferences
+  app.findGrepPreferences.properties = grepFindString;
+  app.changeGrepPreferences.properties = grepChangeString;
+
+  // Run grep find/change on selection
+  mySelection.changeGrep();
+
+  // clear find preferences
+  app.findGrepPreferences = NothingEnum.nothing;
+  app.changeGrepPreferences = NothingEnum.nothing;
+
+}
 
 
 function getParagraphsByName(myParagraphStyles) { // get all paragraph style names for dropdown
-        
-        var paragraphsByName = [];
-        
-        for (var i = 0; i < myParagraphStyles.length; i++) {
-            
-                    paragraphsByName.push(myParagraphStyles[i].name) // push name of paragraph style to array   
-                    
-                }
-        
-        return paragraphsByName;
-    }
+
+  var paragraphsByName = [];
+
+  for (var i = 0; i < myParagraphStyles.length; i++) {
+
+    paragraphsByName.push(myParagraphStyles[i].name) // push name of paragraph style to array
+
+  }
+
+  return paragraphsByName;
+}
 
 
 function buildWindow(myWindow) {
-          var myPreferredSize = [600,50];
-        
-                 myWindow.preferredSize = myPreferredSize;
-                 myWindow.margins = 20;
-                 myWindow.alignChildren = "fill";
-          
-          
-             // panel describing script
-     var myDescriptionPanel = myWindow.add("panel", undefined, "Description");
-            myDescriptionPanel.add("statictext", undefined, myDescription);
-            myDescriptionPanel.preferredSize = myPreferredSize;
-            myDescriptionPanel.alignChildren = "left";
-            
-      var myStyleCheckbox = myWindow.add("checkbox", undefined, "Assign paragraph style to text.");
-             myStyleCheckbox.value = true; // set default value to true
-             
-             
-        myStyleCheckbox.onClick = function() {
-                
-                if (myStyleCheckbox.value == true) {
-                    myDropdownPanel.enabled = true;
-                    } else {
-                     myDropdownPanel.enabled = false;
-                     }
-                 
-                 myWindow.update();
-            
-            }
-     
-         
+  var myPreferredSize = [600, 50];
 
-    var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
-    var myDropdownGroup = myDropdownPanel.add("dropdownlist", undefined, myDropdownOptions);
-            
-            myDropdownGroup.onChange = function() {
-                myDropdownSelection = myDropdownGroup.selection.index; // chagne global variable to index of seleted option on change.
-                };
-          
-               
-            // ok, cancel buttons
-            var myActionGroup = myWindow.add("group", undefined);
-                   myActionGroup.alignment = "right";
-                
-                var myCancelBtn = myActionGroup.add("button", undefined, "Cancel"); // auto responds to Esc key
-                var myOkBtn = myActionGroup.add("button", undefined, "Run", {name: "ok"}); // auto responds to Enter key
-      
+  myWindow.preferredSize = myPreferredSize;
+  myWindow.margins = 20;
+  myWindow.alignChildren = "fill";
+
+
+  // panel describing script
+  var myDescriptionPanel = myWindow.add("panel", undefined, "Description");
+      myDescriptionPanel.preferredSize = myPreferredSize;
+      myDescriptionPanel.alignChildren = "left";
+      myDescriptionPanel.margins = 20;
+
+  var myDescriptionPanelText = myDescriptionPanel.add("statictext", undefined, myDescription, {multiline: true});
+      myDescriptionPanelText.minimumSize = [500,10]
+
+
+  //NOTE: Because checkbox doesn't have a margin property, it can't be set; need to add to group to add margin settings.
+
+  var myOptionsPanel = myWindow.add("panel", undefined, "Options");
+      myOptionsPanel.preferredSize = myPreferredSize;
+      myOptionsPanel.orientation = "row";
+      myOptionsPanel.spacing = 50;
+
+  var myOptionsAssignStyleGroup = myOptionsPanel.add("group");
+  var myAssignStyleCheckbox = myOptionsAssignStyleGroup.add("checkbox", undefined, "Assign aparagraph style to cleaned text.");
+      myOptionsAssignStyleGroup.alignment = "left"
+      myOptionsAssignStyleGroup.margins = 10;
+
+  var myOptionsOnlyShowListsGroup = myOptionsPanel.add("group");
+  var myShowListsCheckbox = myOptionsOnlyShowListsGroup.add("checkbox", undefined, "Only show numbered or bullet list styles.");
+      myOptionsOnlyShowListsGroup.alignment = "right";
+
+  // set default value to true
+  myAssignStyleCheckbox.value = true;
+  myShowListsCheckbox.value = true;
+
+
+  myAssignStyleCheckbox.onClick = function() {
+
+    if (myAssignStyleCheckbox.value == true) {
+      myDropdownPanel.enabled = true;
+      myOptionsOnlyShowListsGroup.enabled = true;
+    } else {
+      myDropdownPanel.enabled = false;
+      myOptionsOnlyShowListsGroup.enabled = false; // disable option to only show list groups if deactivated
     }
+
+    myWindow.update();
+
+
+    //FOR TESTING
+    var winSize = myWindow.size
+    myWindow.add("statictext", undefined, winSize)
+
+  }
+
+
+
+  var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
+  var myDropdownGroup = myDropdownPanel.add("dropdownlist", undefined, myDropdownOptions);
+
+  myDropdownGroup.onChange = function() {
+    myDropdownSelection = myDropdownGroup.selection.index; // chagne global variable to index of seleted option on change.
+  };
+
+
+  // ok, cancel buttons
+  var myActionGroup = myWindow.add("group", undefined);
+  myActionGroup.alignment = "right";
+
+  var myCancelBtn = myActionGroup.add("button", undefined, "Cancel"); // auto responds to Esc key
+  var myOkBtn = myActionGroup.add("button", undefined, "Run", {
+    name: "ok"
+  }); // auto responds to Enter key
+
+}
 
 
 function main() {
-        app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL; // allow user interaction with dialogs
-        
-        var mySelection = app.selection[0];  // get selected text
-    
-        var myWindow = new Window("dialog", myName); // create dialog window
-            
-            buildWindow(myWindow);
-            
-            
-            if (myWindow.show() == true) { // if the dialog window is showing (ok is clicked)      
-                    
-                      if ((mySelection == "") || (mySelection == undefined)) { // make sure user has selected text
-                            alert("Please select the text you want to clean up, and run this script again.")
-                    } else {
-                            myChangeGrep(mySelection); // run grep to remove leading numbers
-                                var paragraphStyleToApply = myParagraphStyles.itemByName(myDropdownOptions[myDropdownSelection]); // get paragraph style object by name from the myDropdownOptions Array
-                                       mySelection.applyParagraphStyle(paragraphStyleToApply); // apply paragraph style to selection.
-            }    
-                    
-                
-                }
-    
+  app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL; // allow user interaction with dialogs
+
+  var mySelection = app.selection[0]; // get selected text
+
+  var myWindow = new Window("dialog", myName); // create dialog window
+
+  buildWindow(myWindow);
+
+
+  if (myWindow.show() == true) { // if the dialog window is showing (ok is clicked)
+
+    if ((mySelection == "") || (mySelection == undefined)) { // make sure user has selected text
+      alert("Please select the text you want to clean up, and run this script again.")
+    } else {
+      myChangeGrep(mySelection); // run grep to remove leading numbers
+      var paragraphStyleToApply = myParagraphStyles.itemByName(myDropdownOptions[myDropdownSelection]); // get paragraph style object by name from the myDropdownOptions Array
+      mySelection.applyParagraphStyle(paragraphStyleToApply); // apply paragraph style to selection.
     }
+
+
+  }
+
+}
 
 
 main();
