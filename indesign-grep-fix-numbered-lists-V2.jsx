@@ -1,4 +1,4 @@
-//https://www.typefi.com/extendscriptAPI/indesign/#GroupSUI.html
+﻿//https://www.typefi.com/extendscriptAPI/indesign/#GroupSUI.html
 // TODO: check for active document; selected text.
 // TODO: provide checkbox option for whether or not to replace with style
 // TODO: provide option to only show numbered/bullet lists; re-get paragraph styles if so
@@ -20,7 +20,7 @@ if (app.documents.length > 0) {
 }
 
 var myParagraphStyles = myDoc.paragraphStyles; // get all paragraph styles in the document
-// var myDropdownOptions = getParagraphsByName(myParagraphStyles); // get names of all paragraph styles
+var myDropdownOptions;// = getListParagraphStylesByName(myParagraphStyles); // get names of all paragraph styles
 var myDropdownSelection;
 
 
@@ -47,41 +47,24 @@ function myChangeGrep(mySelection) {
 }
 
 function getListParagraphStylesByName(myParagraphStyles) {
-  var paragraphsByName = [];
+  var paragraphsByName = []; 
 
-  function isAListStyle(styleInQuestion) { // determine if style is a bullet or numbered list
-    var result;
+
 
     var bulletListValue = 1280598644; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
     var numberedListValue = 1280601709; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
     var noListValue = 1280601711; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
-
-    if (styleInQuestion.bulletsAndNumberingListType == noListValue) { // is not a list style
-      // alert("false " + styleInQuestion.bulletsAndNumberingListType)
-        result = false;
-    } else if (styleInQuestion.bulletsAndNumberingListType == bulletListValue) { // is a bullet list value
-      // alert("true " + styleInQuestion.bulletsAndNumberingListType)
-        result = true;
-        // alert("true " + styleInQuestion.bulletsAndNumberingListType)
-    } else if (styleInQuestion.bulletsAndNumberingListType == numberedListValue) { // is a numbered list value
-        result = true;
-        // alert("false " + styleInQuestion.bulletsAndNumberingListType)
-    } else {
-        result = false;
-    }
-
-    return result;
-  }
-
-  alert("styles length " + myParagraphStyles.length)
+    
 
     for (var i = 0; i < myParagraphStyles.length; i++) { // loop through each document paragraph style, and:
-      var checkStyle = isAListStyle(myParagraphStyles[i]);
-      if (checkStyle == true) {
-        paragraphsByName.push(myParagraphStyles[i])
-      }
+
+
+        if ((myParagraphStyles[i].bulletsAndNumberingListType == bulletListValue) || (myParagraphStyles[i].bulletsAndNumberingListType == numberedListValue)) { // if the paragraph style returns as a numbered list or bullet list, push to array.
+            paragraphsByName.push(myParagraphStyles[i].name)
+            }
+       
     }
-    alert(paragraphsByName)
+    myDropdownOptions = paragraphsByName;
     return paragraphsByName;
 }
 
@@ -95,9 +78,19 @@ function getParagraphsByName(myParagraphStyles) { // get all paragraph style nam
     paragraphsByName.push(myParagraphStyles[i].name) // push name of paragraph style to array
 
   }
-
+    myDropdownOptions = paragraphsByName;
   return paragraphsByName;
 }
+
+function populateDropdown(targetDropdown, itemArr) {
+    
+        targetDropdown.removeAll(); // remove all children
+        
+        for (var i = 0; i < itemArr.length; i++) { 
+               targetDropdown.add("item", itemArr[i]); // populate list with new values
+            }
+    }
+
 
 
 function buildWindow(myWindow) {
@@ -126,7 +119,7 @@ function buildWindow(myWindow) {
       myOptionsPanel.spacing = 50;
 
   var myOptionsAssignStyleGroup = myOptionsPanel.add("group");
-  var myAssignStyleCheckbox = myOptionsAssignStyleGroup.add("checkbox", undefined, "Assign aparagraph style to cleaned text.");
+  var myAssignStyleCheckbox = myOptionsAssignStyleGroup.add("checkbox", undefined, "Assign a paragraph style to cleaned text.");
       myOptionsAssignStyleGroup.alignment = "left"
       myOptionsAssignStyleGroup.margins = 10;
 
@@ -136,48 +129,30 @@ function buildWindow(myWindow) {
 
   // set default value to true
   myAssignStyleCheckbox.value = true;
-  myShowListsCheckbox.value = false;
-
-
-  myAssignStyleCheckbox.onClick = function() {
-
-    if (myAssignStyleCheckbox.value == true) {
-      myDropdownPanel.enabled = true;
-      myOptionsOnlyShowListsGroup.enabled = true;
-    } else {
-      myDropdownPanel.enabled = false;
-      myOptionsOnlyShowListsGroup.enabled = false; // disable option to only show list groups if deactivated
-    }
-
-  myShowListsCheckbox.onClick = function() {
-        myDropdownSelection = [];
-
-    if (myShowListsCheckbox.value == true) {
-        myDropdownSelection = getListParagraphStylesByName(myParagraphStyles);
-    } else {
-        myDropdownSelection = getParagraphsByName(myParagraphStyles)
-    }
-  }
-
-    myWindow.update();
-
-
-    //FOR TESTING
-    var winSize = myWindow.size
-    myWindow.add("statictext", undefined, winSize)
-
-  }
+  myShowListsCheckbox.value = true;
+  
+    var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
+    var myDropdownGroup = myDropdownPanel.add("dropdownlist", undefined, []);
+    
+   populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles)) // inital populate dropdown
+   
+   
+    myShowListsCheckbox.onClick = function() {
+            if (myShowListsCheckbox.value == true) {
+                  populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles))
+                } else {
+                    populateDropdown(myDropdownGroup, getParagraphsByName(myParagraphStyles))
+                    }
+        }
 
 
 
-  var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
-  var myDropdownGroup = myDropdownPanel.add("dropdownlist", undefined, myDropdownOptions);
-
-  myDropdownGroup.onChange = function() {
+    
+                      myDropdownGroup.onChange = function() {
     myDropdownSelection = myDropdownGroup.selection.index; // chagne global variable to index of seleted option on change.
   };
 
-
+  
   // ok, cancel buttons
   var myActionGroup = myWindow.add("group", undefined);
   myActionGroup.alignment = "right";
@@ -192,10 +167,6 @@ function buildWindow(myWindow) {
 
 function main() {
   app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL; // allow user interaction with dialogs
-
-
-  // FOR TESTING:
-  getListParagraphStylesByName(myParagraphStyles)
 
   var mySelection = app.selection[0]; // get selected text
 
