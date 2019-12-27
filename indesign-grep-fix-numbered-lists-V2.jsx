@@ -20,7 +20,7 @@ if (app.documents.length > 0) {
 }
 
 var myParagraphStyles = myDoc.paragraphStyles; // get all paragraph styles in the document
-var myDropdownOptions = getParagraphsByName(myParagraphStyles); // get names of all paragraph styles
+// var myDropdownOptions = getParagraphsByName(myParagraphStyles); // get names of all paragraph styles
 var myDropdownSelection;
 
 
@@ -44,6 +44,45 @@ function myChangeGrep(mySelection) {
   app.findGrepPreferences = NothingEnum.nothing;
   app.changeGrepPreferences = NothingEnum.nothing;
 
+}
+
+function getListParagraphStylesByName(myParagraphStyles) {
+  var paragraphsByName = [];
+
+  function isAListStyle(styleInQuestion) { // determine if style is a bullet or numbered list
+    var result;
+
+    var bulletListValue = 1280598644; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
+    var numberedListValue = 1280601709; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
+    var noListValue = 1280601711; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
+
+    if (styleInQuestion.bulletsAndNumberingListType == noListValue) { // is not a list style
+      // alert("false " + styleInQuestion.bulletsAndNumberingListType)
+        result = false;
+    } else if (styleInQuestion.bulletsAndNumberingListType == bulletListValue) { // is a bullet list value
+      // alert("true " + styleInQuestion.bulletsAndNumberingListType)
+        result = true;
+        // alert("true " + styleInQuestion.bulletsAndNumberingListType)
+    } else if (styleInQuestion.bulletsAndNumberingListType == numberedListValue) { // is a numbered list value
+        result = true;
+        // alert("false " + styleInQuestion.bulletsAndNumberingListType)
+    } else {
+        result = false;
+    }
+
+    return result;
+  }
+
+  alert("styles length " + myParagraphStyles.length)
+
+    for (var i = 0; i < myParagraphStyles.length; i++) { // loop through each document paragraph style, and:
+      var checkStyle = isAListStyle(myParagraphStyles[i]);
+      if (checkStyle == true) {
+        paragraphsByName.push(myParagraphStyles[i])
+      }
+    }
+    alert(paragraphsByName)
+    return paragraphsByName;
 }
 
 
@@ -97,7 +136,7 @@ function buildWindow(myWindow) {
 
   // set default value to true
   myAssignStyleCheckbox.value = true;
-  myShowListsCheckbox.value = true;
+  myShowListsCheckbox.value = false;
 
 
   myAssignStyleCheckbox.onClick = function() {
@@ -109,6 +148,16 @@ function buildWindow(myWindow) {
       myDropdownPanel.enabled = false;
       myOptionsOnlyShowListsGroup.enabled = false; // disable option to only show list groups if deactivated
     }
+
+  myShowListsCheckbox.onClick = function() {
+        myDropdownSelection = [];
+
+    if (myShowListsCheckbox.value == true) {
+        myDropdownSelection = getListParagraphStylesByName(myParagraphStyles);
+    } else {
+        myDropdownSelection = getParagraphsByName(myParagraphStyles)
+    }
+  }
 
     myWindow.update();
 
@@ -143,6 +192,10 @@ function buildWindow(myWindow) {
 
 function main() {
   app.scriptPreferences.userInteractionLevel = UserInteractionLevels.INTERACT_WITH_ALL; // allow user interaction with dialogs
+
+
+  // FOR TESTING:
+  getListParagraphStylesByName(myParagraphStyles)
 
   var mySelection = app.selection[0]; // get selected text
 
