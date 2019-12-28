@@ -5,7 +5,7 @@
 // TODO: Create a "notes" button with longer description of function...use active/inactive window?
 // TODO: add radio buttons to specify between bullet, number and lettered lists
 
-var myVersion = "0.4";
+var myVersion = "0.6";
 var myName = "Numbered List Fixer - Version " + myVersion;
 var myDescription = "Formats numbered lists copied to InDesign that retained leading digits, for example: \r\r    1) line of text \r    2) line of text \r\rScript will remove leading digits and apply the selected number/list style.";
 var myNotes = ""
@@ -23,6 +23,7 @@ if (app.documents.length > 0) {
 var myParagraphStyles = myDoc.paragraphStyles; // get all paragraph styles in the document
 var myDropdownOptions;// = getListParagraphStylesByName(myParagraphStyles); // get names of all paragraph styles
 var myDropdownSelection;
+var myListTypeSelection;
 
 
 function myChangeGrep(mySelection) {
@@ -102,16 +103,44 @@ function buildWindow(myWindow) {
   myWindow.margins = 20;
   myWindow.alignChildren = "fill";
 
-
+var myDescriptionPanelGroup = myWindow.add("group");
+       myDescriptionPanelGroup.alignChildren = ["fill", "fill"]
+       
   // panel describing script
-  var myDescriptionPanel = myWindow.add("panel", undefined, "Description");
+  var myDescriptionPanel = myDescriptionPanelGroup.add("panel", undefined, "Description");
       myDescriptionPanel.preferredSize = myPreferredSize;
       myDescriptionPanel.alignChildren = "left";
       myDescriptionPanel.margins = 20;
+      
+      
 
   var myDescriptionPanelText = myDescriptionPanel.add("statictext", undefined, myDescription, {multiline: true});
-      myDescriptionPanelText.minimumSize = [500,10]
+      myDescriptionPanelText.minimumSize = myPreferredSize;
 
+// radio button selector to specify list type
+var myListTypeOptionsPanel = myDescriptionPanelGroup.add("panel", undefined, "List Type");
+       myListTypeOptionsPanel.alignChildren = "left";
+       myListTypeOptionsPanel.margins = 20;
+       
+       
+       var listTypeNumbered = myListTypeOptionsPanel.add("radiobutton", undefined, "Numbered List");
+        var listTypeBullet = myListTypeOptionsPanel.add("radiobutton", undefined, "Bullet List");
+        var listTypeLettered = myListTypeOptionsPanel.add("radiobutton", undefined, "Lettered List");
+        
+    
+        
+        listTypeNumbered.value = true; // set default list type
+  //      getListTypeOptionSelection(); // set initial value
+        
+//        myListTypeOptionsPanel.addEventListener("click", getListTypeOptionSelection(event), false);
+
+
+        
+        
+
+     //   myListTypeOptionsPanel.minimumSize = myPreferredSize;
+        
+       // myListTypeOptionsPanel.minimumSize.height = myDescriptionPanel.size.height
 
   //NOTE: Because checkbox doesn't have a margin property, it can't be set; need to add to group to add margin settings.
 
@@ -171,7 +200,17 @@ function main() {
 
   var myWindow = new Window("dialog", myName); // create dialog window
 
-  buildWindow(myWindow);
+    function getListTypeSelection() {
+        for (var i = 0; i < myListTypeOptionsPanel.children.length; i++) {
+                if (myListTypeOptionsPanel.children[i].value == true) {
+                    var myListTypeSelection = myListTypeOptionsPanel.children[i].text;
+                    $.writeln(myListTypeOptionsPanel.children[i].text)
+                    break;
+                    }
+            return myListTypeSelection;
+        }
+
+  buildWindow(myWindow, getListTypeSelection);
 
 
   if (myWindow.show() == true) { // if the dialog window is showing (ok is clicked)
@@ -179,6 +218,11 @@ function main() {
     if ((mySelection == "") || (mySelection == undefined)) { // make sure user has selected text
       alert("Please select the text you want to clean up, and run this script again.")
     } else {
+        if (listTypeNumbered.value == true) {
+            $.writeln("asdfasdf")
+            }
+            
+        
       myChangeGrep(mySelection); // run grep to remove leading numbers
       var paragraphStyleToApply = myParagraphStyles.itemByName(myDropdownOptions[myDropdownSelection]); // get paragraph style object by name from the myDropdownOptions Array
       
