@@ -1,15 +1,21 @@
 ﻿//https://www.typefi.com/extendscriptAPI/indesign/#GroupSUI.html
-// TODO: check for active document; selected text.
-// TODO: provide checkbox option for whether or not to replace with style
-// TODO: provide option to only show numbered/bullet lists; re-get paragraph styles if so
-// TODO: Create a "notes" button with longer description of function...use active/inactive window?
-// TODO: add radio buttons to specify between bullet, number and lettered lists
+
+// TODO: Create a "notes" button (or tab) with longer description of function...use active/inactive window?
+// TODO: If document only has default [no] or [Basic] styles, disable dropdown or checkbox?
+
+
+// DONE: check for active document; selected text.
+// DONE: provide checkbox option for whether or not to replace with style
+// DONE: provide option to only show numbered/bullet lists; re-get paragraph styles if so
+// DONE: add radio buttons to specify between bullet, number and lettered lists
 
 var myVersion = "0.4";
 var myName = "Numbered List Fixer - Version " + myVersion;
-var myDescription = "Formats numbered lists copied to InDesign that retained leading digits, for example: \r\r    1) line of text \r    2) line of text \r\rScript will remove leading digits and apply the selected number/list style.";
+var myDescription = "Formats numbered lists copied to InDesign that retained leading digits, for example:\r\u00A0\u00A01) line of text\r\u00A0\u00A02) line of text\rScript will remove leading digits and apply the selected number/list style.\rFor lists that have bullets or letters (e.g. a), b)), select the appropriate list type to the right.";
 var myNotes = ""
-var grepFindString = {findWhat: "^\\d+(\\.)?(\\))?([ \\t])"};
+var grepFindStringNumbered = {findWhat: "^\\d+(\\.)?(\\))?([ \\t])"};
+var grepFindStringBullet = {findWhat: "^\\W(\\.)?(\\))?([ \\t])"};
+var grepFindStringAlphabet = {findWhat: "^\\[A-Za-z](\\.)?(\\))?([ \\t])"}
 var grepChangeString = {changeTo: ""};
 
 // make sure a document is open and set the active one to the target document.
@@ -23,9 +29,10 @@ if (app.documents.length > 0) {
 var myParagraphStyles = myDoc.paragraphStyles; // get all paragraph styles in the document
 var myDropdownOptions;// = getListParagraphStylesByName(myParagraphStyles); // get names of all paragraph styles
 var myDropdownSelection;
+var myListTypeSelection
 
 
-function myChangeGrep(mySelection) {
+function myChangeGrep(mySelection, grepFindString, grepChangeString) {
 
   // http://jongware.mit.edu/idcs6js/pc_Application.html#changeGrep
 
@@ -47,15 +54,15 @@ function myChangeGrep(mySelection) {
 
 }
 
-function getListParagraphStylesByName(myParagraphStyles) {
-  var paragraphsByName = []; 
+function getListParagraphStylesByName(myParagraphStyles) { // get all paragraph styles that are bullet, numbered, or list type
+  var paragraphsByName = [];
 
 
 
     var bulletListValue = 1280598644; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
     var numberedListValue = 1280601709; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
     var noListValue = 1280601711; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
-    
+
 
     for (var i = 0; i < myParagraphStyles.length; i++) { // loop through each document paragraph style, and:
 
@@ -63,12 +70,11 @@ function getListParagraphStylesByName(myParagraphStyles) {
         if ((myParagraphStyles[i].bulletsAndNumberingListType == bulletListValue) || (myParagraphStyles[i].bulletsAndNumberingListType == numberedListValue)) { // if the paragraph style returns as a numbered list or bullet list, push to array.
             paragraphsByName.push(myParagraphStyles[i].name)
             }
-       
+
     }
     myDropdownOptions = paragraphsByName;
     return paragraphsByName;
 }
-
 
 function getParagraphsByName(myParagraphStyles) { // get all paragraph style names for dropdown
 
@@ -84,16 +90,25 @@ function getParagraphsByName(myParagraphStyles) { // get all paragraph style nam
 }
 
 function populateDropdown(targetDropdown, itemArr) { // populate the paragraph style select dropdown
-    
+
         targetDropdown.removeAll(); // remove all children
-        
-        for (var i = 0; i < itemArr.length; i++) { 
+
+        for (var i = 0; i < itemArr.length; i++) {
                targetDropdown.add("item", itemArr[i]); // populate list with new values
             }
-        
+
     }
 
+function multilineTextSplitter(str, target) { // split string by \r and makes individual statictext objects for each
 
+      var multilineString = str.split('\r');
+          alert(multilineString)
+
+      for (var i = 0; i < multilineString.length; i++) {
+        target.add("statictext", undefined, multilineString[i])
+      }
+
+    }
 
 function buildWindow(myWindow) {
   var myPreferredSize = [600, 50];
@@ -102,15 +117,47 @@ function buildWindow(myWindow) {
   myWindow.margins = 20;
   myWindow.alignChildren = "fill";
 
+  var myDescriptionAndListTypeGroup = myWindow.add("group", undefined);
+      myDescriptionAndListTypeGroup.alignChildren = "fill"
 
   // panel describing script
-  var myDescriptionPanel = myWindow.add("panel", undefined, "Description");
+  var myDescriptionPanel = myDescriptionAndListTypeGroup.add("panel", undefined, "Description");
       myDescriptionPanel.preferredSize = myPreferredSize;
       myDescriptionPanel.alignChildren = "left";
       myDescriptionPanel.margins = 20;
 
-  var myDescriptionPanelText = myDescriptionPanel.add("statictext", undefined, myDescription, {multiline: true});
-      myDescriptionPanelText.minimumSize = [500,10]
+      multilineTextSplitter(myDescription, myDescriptionPanel)
+
+  //var myDescriptionPanelText = myDescriptionPanel.add("statictext", undefined, myDescription, {multiline: true});
+      //myDescriptionPanelText.minimumSize = [500,10]
+
+  // set options for list type. Default is numbered.
+  var myListTypeOptionsPanel = myDescriptionAndListTypeGroup.add("panel", undefined, "List Type");
+      myListTypeOptionsPanel.margins = 20;
+      myListTypeOptionsPanel.alignChildren = "left";
+
+      var myListTypeOptionsNumbered = myListTypeOptionsPanel.add("radiobutton", undefined, "Numbered List");
+      var myListTypeOptionsBullet = myListTypeOptionsPanel.add("radiobutton", undefined, "Bulleted List");
+      var myListTypeOptionsAlphabet = myListTypeOptionsPanel.add("radiobutton", undefined, "Lettered List");
+
+
+      // set default value for global variables
+      myListTypeOptionsNumbered.value = true;
+      myListTypeSelection = myListTypeOptionsNumbered.text;
+
+      // event listeners for changing list type
+      myListTypeOptionsNumbered.onClick = function() {
+        myListTypeSelection = myListTypeOptionsNumbered.text;
+      }
+
+      myListTypeOptionsBullet.onClick = function() {
+        myListTypeSelection = myListTypeOptionsBullet.text;
+      }
+
+      myListTypeOptionsAlphabet.onClick = function() {
+        myListTypeSelection = myListTypeOptionsAlphabet.text;
+      }
+
 
 
   //NOTE: Because checkbox doesn't have a margin property, it can't be set; need to add to group to add margin settings.
@@ -126,19 +173,19 @@ function buildWindow(myWindow) {
       myOptionsAssignStyleGroup.margins = 10;
 
   var myOptionsOnlyShowListsGroup = myOptionsPanel.add("group");
-  var myShowListsCheckbox = myOptionsOnlyShowListsGroup.add("checkbox", undefined, "Only show numbered or bullet list styles.");
+  var myShowListsCheckbox = myOptionsOnlyShowListsGroup.add("checkbox", undefined, "Only show numbered or Bulleted List styles.");
       myOptionsOnlyShowListsGroup.alignment = "right";
 
   // set default checkbox values to true
   myAssignStyleCheckbox.value = true;
   myShowListsCheckbox.value = true;
-  
+
     var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
     var myDropdownGroup = myDropdownPanel.add("dropdownlist", undefined, []);
-    
+
    populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles)) // inital populate dropdown
-   
-   
+
+
     myShowListsCheckbox.onClick = function() { // watch for changes to checkbox and change dropdown accordingly
             if (myShowListsCheckbox.value == true) {
                   populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles))
@@ -151,7 +198,7 @@ function buildWindow(myWindow) {
         myDropdownSelection = myDropdownGroup.selection.index; // chagne global variable to index of seleted option on change.
   };
 
-  
+
   // ok, cancel buttons
   var myActionGroup = myWindow.add("group", undefined);
   myActionGroup.alignment = "right";
@@ -173,15 +220,37 @@ function main() {
 
   buildWindow(myWindow);
 
+  function getSelectedListType(targetRadioParentGroup) {
+    for (var i=0; i < targetRadioParentGroup.length; i++) {
+      if (targetRadioParentGroup.children[i].value == true) {
+        return targetRadioParentGroup.children[i].text;
+      }
+    }
+  }
+
 
   if (myWindow.show() == true) { // if the dialog window is showing (ok is clicked)
 
     if ((mySelection == "") || (mySelection == undefined)) { // make sure user has selected text
       alert("Please select the text you want to clean up, and run this script again.")
     } else {
+      // determine type of grep string to use based on list type
+      if (myListTypeSelection == "Numbered List") {
+        myChagneGrep(mySelection, grepFindStringNumbered, grepChangeString);
+      } else if (myListTypeSelection == "Bulleted List") {
+        myChangeGrep(mySelection, grepFindStringBullet, grepChangeString);
+      } else if (myListTypeSelection == "Lettered List") {
+        myChangeGrep(mySelection, grepFindStringAlphabet, grepChangeString)
+      } else {
+        alert("Error - can't determine list type.")
+        exit(0)
+      }
+
+
+
       myChangeGrep(mySelection); // run grep to remove leading numbers
       var paragraphStyleToApply = myParagraphStyles.itemByName(myDropdownOptions[myDropdownSelection]); // get paragraph style object by name from the myDropdownOptions Array
-      
+
       mySelection.applyParagraphStyle(paragraphStyleToApply); // apply paragraph style to selection.
     }
 

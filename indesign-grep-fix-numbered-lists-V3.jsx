@@ -5,7 +5,7 @@
 // TODO: Create a "notes" button with longer description of function...use active/inactive window?
 // TODO: add radio buttons to specify between bullet, number and lettered lists
 
-var myVersion = "0.6";
+var myVersion = "3.2";
 var myName = "Numbered List Fixer - Version " + myVersion;
 var myDescription = "Formats numbered lists copied to InDesign that retained leading digits, for example: \r\r    1) line of text \r    2) line of text \r\rScript will remove leading digits and apply the selected number/list style.";
 var myNotes = ""
@@ -49,14 +49,14 @@ function myChangeGrep(mySelection) {
 }
 
 function getListParagraphStylesByName(myParagraphStyles) {
-  var paragraphsByName = []; 
+  var paragraphsByName = [];
 
 
 
     var bulletListValue = 1280598644; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
     var numberedListValue = 1280601709; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
     var noListValue = 1280601711; // values set by ID DOM, what styleInQuestion.bulletsAndNumberingListType returns.
-    
+
 
     for (var i = 0; i < myParagraphStyles.length; i++) { // loop through each document paragraph style, and:
 
@@ -64,7 +64,7 @@ function getListParagraphStylesByName(myParagraphStyles) {
         if ((myParagraphStyles[i].bulletsAndNumberingListType == bulletListValue) || (myParagraphStyles[i].bulletsAndNumberingListType == numberedListValue)) { // if the paragraph style returns as a numbered list or bullet list, push to array.
             paragraphsByName.push(myParagraphStyles[i].name)
             }
-       
+
     }
     myDropdownOptions = paragraphsByName;
     return paragraphsByName;
@@ -85,13 +85,13 @@ function getParagraphsByName(myParagraphStyles) { // get all paragraph style nam
 }
 
 function populateDropdown(targetDropdown, itemArr) { // populate the paragraph style select dropdown
-    
+
         targetDropdown.removeAll(); // remove all children
-        
-        for (var i = 0; i < itemArr.length; i++) { 
+
+        for (var i = 0; i < itemArr.length; i++) {
                targetDropdown.add("item", itemArr[i]); // populate list with new values
             }
-        
+
     }
 
 
@@ -105,14 +105,14 @@ function buildWindow(myWindow) {
 
 var myDescriptionPanelGroup = myWindow.add("group");
        myDescriptionPanelGroup.alignChildren = ["fill", "fill"]
-       
+
   // panel describing script
   var myDescriptionPanel = myDescriptionPanelGroup.add("panel", undefined, "Description");
       myDescriptionPanel.preferredSize = myPreferredSize;
       myDescriptionPanel.alignChildren = "left";
       myDescriptionPanel.margins = 20;
-      
-      
+
+
 
   var myDescriptionPanelText = myDescriptionPanel.add("statictext", undefined, myDescription, {multiline: true});
       myDescriptionPanelText.minimumSize = myPreferredSize;
@@ -121,25 +121,25 @@ var myDescriptionPanelGroup = myWindow.add("group");
 var myListTypeOptionsPanel = myDescriptionPanelGroup.add("panel", undefined, "List Type");
        myListTypeOptionsPanel.alignChildren = "left";
        myListTypeOptionsPanel.margins = 20;
-       
-       
+
+
        var listTypeNumbered = myListTypeOptionsPanel.add("radiobutton", undefined, "Numbered List");
         var listTypeBullet = myListTypeOptionsPanel.add("radiobutton", undefined, "Bullet List");
         var listTypeLettered = myListTypeOptionsPanel.add("radiobutton", undefined, "Lettered List");
-        
-    
-        
+
+
+
         listTypeNumbered.value = true; // set default list type
   //      getListTypeOptionSelection(); // set initial value
-        
+
 //        myListTypeOptionsPanel.addEventListener("click", getListTypeOptionSelection(event), false);
 
 
-        
-        
+
+
 
      //   myListTypeOptionsPanel.minimumSize = myPreferredSize;
-        
+
        // myListTypeOptionsPanel.minimumSize.height = myDescriptionPanel.size.height
 
   //NOTE: Because checkbox doesn't have a margin property, it can't be set; need to add to group to add margin settings.
@@ -161,13 +161,13 @@ var myListTypeOptionsPanel = myDescriptionPanelGroup.add("panel", undefined, "Li
   // set default checkbox values to true
   myAssignStyleCheckbox.value = true;
   myShowListsCheckbox.value = true;
-  
+
     var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
     var myDropdownGroup = myDropdownPanel.add("dropdownlist", undefined, []);
-    
+
    populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles)) // inital populate dropdown
-   
-   
+
+
     myShowListsCheckbox.onClick = function() { // watch for changes to checkbox and change dropdown accordingly
             if (myShowListsCheckbox.value == true) {
                   populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles))
@@ -180,7 +180,7 @@ var myListTypeOptionsPanel = myDescriptionPanelGroup.add("panel", undefined, "Li
         myDropdownSelection = myDropdownGroup.selection.index; // chagne global variable to index of seleted option on change.
   };
 
-  
+
   // ok, cancel buttons
   var myActionGroup = myWindow.add("group", undefined);
   myActionGroup.alignment = "right";
@@ -221,11 +221,11 @@ function main() {
         if (listTypeNumbered.value == true) {
             $.writeln("asdfasdf")
             }
-            
-        
+
+
       myChangeGrep(mySelection); // run grep to remove leading numbers
       var paragraphStyleToApply = myParagraphStyles.itemByName(myDropdownOptions[myDropdownSelection]); // get paragraph style object by name from the myDropdownOptions Array
-      
+
       mySelection.applyParagraphStyle(paragraphStyleToApply); // apply paragraph style to selection.
     }
 
