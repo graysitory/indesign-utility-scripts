@@ -9,9 +9,9 @@
 // DONE: provide option to only show numbered/bullet lists; re-get paragraph styles if so
 // DONE: add radio buttons to specify between bullet, number and lettered lists
 
-var myVersion = "0.4";
+var myVersion = "2.4";
 var myName = "Numbered List Fixer - Version " + myVersion;
-var myDescription = "Formats numbered lists copied to InDesign that retained leading digits, for example:\r\u00A0\u00A01) line of text\r\u00A0\u00A02) line of text\rScript will remove leading digits and apply the selected number/list style.\rFor lists that have bullets or letters (e.g. a), b)), select the appropriate list type to the right.";
+var myDescription = "Formats numbered lists copied to InDesign that retained leading digits, for example:\r\u00A0\u00A01) line of text\r\u00A0\u00A02) line of text\rScript will remove leading digits and apply the selected number/list style.\rFor lists that have bullets or letters, select the appropriate list type to the right.";
 var myNotes = ""
 var grepFindStringNumbered = {findWhat: "^\\d+(\\.)?(\\))?([ \\t])"};
 var grepFindStringBullet = {findWhat: "^\\W(\\.)?(\\))?([ \\t])"};
@@ -30,6 +30,19 @@ var myParagraphStyles = myDoc.paragraphStyles; // get all paragraph styles in th
 var myDropdownOptions;// = getListParagraphStylesByName(myParagraphStyles); // get names of all paragraph styles
 var myDropdownSelection;
 var myListTypeSelection
+var myDefaultParagraphStylesOnly = checkForDefaultParagraphStyles();
+
+
+function checkForDefaultParagraphStyles() { // check if document only has the default [No Paragraph] and [Basic Paragraph] styles.
+  var myParagraphStyles = myDoc.paragraphStyles;
+
+  if (myParagraphStyles.length <= 2) {
+    return true;
+  } else {
+    return false;
+  }
+
+}
 
 
 function myChangeGrep(mySelection, grepFindString, grepChangeString) {
@@ -72,11 +85,13 @@ function getListParagraphStylesByName(myParagraphStyles) { // get all paragraph 
             }
 
     }
+
+
     myDropdownOptions = paragraphsByName;
     return paragraphsByName;
 }
 
-function getParagraphsByName(myParagraphStyles) { // get all paragraph style names for dropdown
+function getParagraphsByName(myParagraphStyles) { // get all paragraph styles in document
 
   var paragraphsByName = [];
 
@@ -102,7 +117,6 @@ function populateDropdown(targetDropdown, itemArr) { // populate the paragraph s
 function multilineTextSplitter(str, target) { // split string by \r and makes individual statictext objects for each
 
       var multilineString = str.split('\r');
-          alert(multilineString)
 
       for (var i = 0; i < multilineString.length; i++) {
         target.add("statictext", undefined, multilineString[i])
@@ -168,22 +182,43 @@ function buildWindow(myWindow) {
       myOptionsPanel.spacing = 50;
 
   var myOptionsAssignStyleGroup = myOptionsPanel.add("group");
-  var myAssignStyleCheckbox = myOptionsAssignStyleGroup.add("checkbox", undefined, "Assign a paragraph style to cleaned text.");
+  var myAssignStyleCheckbox = myOptionsAssignStyleGroup.add("checkbox", undefined, "Apply a paragraph style to cleaned text.");
       myOptionsAssignStyleGroup.alignment = "left"
       myOptionsAssignStyleGroup.margins = 10;
 
   var myOptionsOnlyShowListsGroup = myOptionsPanel.add("group");
-  var myShowListsCheckbox = myOptionsOnlyShowListsGroup.add("checkbox", undefined, "Only show numbered or Bulleted List styles.");
+  var myShowListsCheckbox = myOptionsOnlyShowListsGroup.add("checkbox", undefined, "Only show Numbered or Bulleted List styles.");
       myOptionsOnlyShowListsGroup.alignment = "right";
 
   // set default checkbox values to true
   myAssignStyleCheckbox.value = true;
-  myShowListsCheckbox.value = true;
+  // starting value determined by setOptions(). myShowListsCheckbox.value = false;
 
     var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
     var myDropdownGroup = myDropdownPanel.add("dropdownlist", undefined, []);
 
-   populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles)) // inital populate dropdown
+   populateDropdown(myDropdownGroup, getParagraphsByName(myParagraphStyles)) // inital populate dropdown
+
+
+
+  function setOptions() { // enable/disable checkbox and dropdown panel based on value
+     if (myAssignStyleCheckbox.value == false) { // if assign style is false, disable showLists and dropdown panel
+       myShowListsCheckbox.enabled = false;
+       myDropdownPanel.enabled = false;
+     } else if ((myAssignStyleCheckbox.value == true) && (getListParagraphStylesByName(myParagraphStyles) == 0)) { // if assign style is true, but the document doesn't have any list styles, enable dropdown, but disable show lists checkbox
+       myShowListsCheckbox.enabled = false;
+       myDropdownPanel.enabled = true;
+     } else {
+       myShowListsCheckbox.enabled = true;
+       myDropdownPanel.enabled = true;
+     }
+
+   }
+
+  setOptions(); // run setOptions on window build
+  myAssignStyleCheckbox.onClick = function() { // run setOptions on click of myAssignStyleCheckbox
+    setOptions();
+  };
 
 
     myShowListsCheckbox.onClick = function() { // watch for changes to checkbox and change dropdown accordingly
