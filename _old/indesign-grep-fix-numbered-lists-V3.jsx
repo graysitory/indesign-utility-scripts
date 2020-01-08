@@ -1,21 +1,15 @@
 ﻿//https://www.typefi.com/extendscriptAPI/indesign/#GroupSUI.html
+// TODO: check for active document; selected text.
+// TODO: provide checkbox option for whether or not to replace with style
+// TODO: provide option to only show numbered/bullet lists; re-get paragraph styles if so
+// TODO: Create a "notes" button with longer description of function...use active/inactive window?
+// TODO: add radio buttons to specify between bullet, number and lettered lists
 
-// TODO: Create a "notes" button (or tab) with longer description of function...use active/inactive window?
-// TODO: If document only has default [no] or [Basic] styles, disable dropdown or checkbox?
-
-
-// DONE: check for active document; selected text.
-// DONE: provide checkbox option for whether or not to replace with style
-// DONE: provide option to only show numbered/bullet lists; re-get paragraph styles if so
-// DONE: add radio buttons to specify between bullet, number and lettered lists
-
-var myVersion = "2.4";
+var myVersion = "3.2";
 var myName = "Numbered List Fixer - Version " + myVersion;
-var myDescription = "Formats numbered lists copied to InDesign that retained leading digits, for example:\r\u00A0\u00A01) line of text\r\u00A0\u00A02) line of text\rScript will remove leading digits and apply the selected number/list style.\rFor lists that have bullets or letters, select the appropriate list type to the right.";
+var myDescription = "Formats numbered lists copied to InDesign that retained leading digits, for example: \r\r    1) line of text \r    2) line of text \r\rScript will remove leading digits and apply the selected number/list style.";
 var myNotes = ""
-var grepFindStringNumbered = {findWhat: "^\\d+(\\.)?(\\))?([ \\t])"};
-var grepFindStringBullet = {findWhat: "^\\W(\\.)?(\\))?([ \\t])"};
-var grepFindStringAlphabet = {findWhat: "^\\[A-Za-z](\\.)?(\\))?([ \\t])"}
+var grepFindString = {findWhat: "^\\d+(\\.)?(\\))?([ \\t])"};
 var grepChangeString = {changeTo: ""};
 
 // make sure a document is open and set the active one to the target document.
@@ -29,23 +23,10 @@ if (app.documents.length > 0) {
 var myParagraphStyles = myDoc.paragraphStyles; // get all paragraph styles in the document
 var myDropdownOptions;// = getListParagraphStylesByName(myParagraphStyles); // get names of all paragraph styles
 var myDropdownSelection;
-var myListTypeSelection
-var myDefaultParagraphStylesOnly = checkForDefaultParagraphStyles();
+var myListTypeSelection;
 
 
-function checkForDefaultParagraphStyles() { // check if document only has the default [No Paragraph] and [Basic Paragraph] styles.
-  var myParagraphStyles = myDoc.paragraphStyles;
-
-  if (myParagraphStyles.length <= 2) {
-    return true;
-  } else {
-    return false;
-  }
-
-}
-
-
-function myChangeGrep(mySelection, grepFindString, grepChangeString) {
+function myChangeGrep(mySelection) {
 
   // http://jongware.mit.edu/idcs6js/pc_Application.html#changeGrep
 
@@ -67,7 +48,7 @@ function myChangeGrep(mySelection, grepFindString, grepChangeString) {
 
 }
 
-function getListParagraphStylesByName(myParagraphStyles) { // get all paragraph styles that are bullet, numbered, or list type
+function getListParagraphStylesByName(myParagraphStyles) {
   var paragraphsByName = [];
 
 
@@ -85,13 +66,12 @@ function getListParagraphStylesByName(myParagraphStyles) { // get all paragraph 
             }
 
     }
-
-
     myDropdownOptions = paragraphsByName;
     return paragraphsByName;
 }
 
-function getParagraphsByName(myParagraphStyles) { // get all paragraph styles in document
+
+function getParagraphsByName(myParagraphStyles) { // get all paragraph style names for dropdown
 
   var paragraphsByName = [];
 
@@ -114,15 +94,7 @@ function populateDropdown(targetDropdown, itemArr) { // populate the paragraph s
 
     }
 
-function multilineTextSplitter(str, target) { // split string by \r and makes individual statictext objects for each
 
-      var multilineString = str.split('\r');
-
-      for (var i = 0; i < multilineString.length; i++) {
-        target.add("statictext", undefined, multilineString[i])
-      }
-
-    }
 
 function buildWindow(myWindow) {
   var myPreferredSize = [600, 50];
@@ -131,48 +103,44 @@ function buildWindow(myWindow) {
   myWindow.margins = 20;
   myWindow.alignChildren = "fill";
 
-  var myDescriptionAndListTypeGroup = myWindow.add("group", undefined);
-      myDescriptionAndListTypeGroup.alignChildren = "fill"
+var myDescriptionPanelGroup = myWindow.add("group");
+       myDescriptionPanelGroup.alignChildren = ["fill", "fill"]
 
   // panel describing script
-  var myDescriptionPanel = myDescriptionAndListTypeGroup.add("panel", undefined, "Description");
+  var myDescriptionPanel = myDescriptionPanelGroup.add("panel", undefined, "Description");
       myDescriptionPanel.preferredSize = myPreferredSize;
       myDescriptionPanel.alignChildren = "left";
       myDescriptionPanel.margins = 20;
 
-      multilineTextSplitter(myDescription, myDescriptionPanel)
-
-  //var myDescriptionPanelText = myDescriptionPanel.add("statictext", undefined, myDescription, {multiline: true});
-      //myDescriptionPanelText.minimumSize = [500,10]
-
-  // set options for list type. Default is numbered.
-  var myListTypeOptionsPanel = myDescriptionAndListTypeGroup.add("panel", undefined, "List Type");
-      myListTypeOptionsPanel.margins = 20;
-      myListTypeOptionsPanel.alignChildren = "left";
-
-      var myListTypeOptionsNumbered = myListTypeOptionsPanel.add("radiobutton", undefined, "Numbered List");
-      var myListTypeOptionsBullet = myListTypeOptionsPanel.add("radiobutton", undefined, "Bulleted List");
-      var myListTypeOptionsAlphabet = myListTypeOptionsPanel.add("radiobutton", undefined, "Lettered List");
 
 
-      // set default value for global variables
-      myListTypeOptionsNumbered.value = true;
-      myListTypeSelection = myListTypeOptionsNumbered.text;
+  var myDescriptionPanelText = myDescriptionPanel.add("statictext", undefined, myDescription, {multiline: true});
+      myDescriptionPanelText.minimumSize = myPreferredSize;
 
-      // event listeners for changing list type
-      myListTypeOptionsNumbered.onClick = function() {
-        myListTypeSelection = myListTypeOptionsNumbered.text;
-      }
-
-      myListTypeOptionsBullet.onClick = function() {
-        myListTypeSelection = myListTypeOptionsBullet.text;
-      }
-
-      myListTypeOptionsAlphabet.onClick = function() {
-        myListTypeSelection = myListTypeOptionsAlphabet.text;
-      }
+// radio button selector to specify list type
+var myListTypeOptionsPanel = myDescriptionPanelGroup.add("panel", undefined, "List Type");
+       myListTypeOptionsPanel.alignChildren = "left";
+       myListTypeOptionsPanel.margins = 20;
 
 
+       var listTypeNumbered = myListTypeOptionsPanel.add("radiobutton", undefined, "Numbered List");
+        var listTypeBullet = myListTypeOptionsPanel.add("radiobutton", undefined, "Bullet List");
+        var listTypeLettered = myListTypeOptionsPanel.add("radiobutton", undefined, "Lettered List");
+
+
+
+        listTypeNumbered.value = true; // set default list type
+  //      getListTypeOptionSelection(); // set initial value
+
+//        myListTypeOptionsPanel.addEventListener("click", getListTypeOptionSelection(event), false);
+
+
+
+
+
+     //   myListTypeOptionsPanel.minimumSize = myPreferredSize;
+
+       // myListTypeOptionsPanel.minimumSize.height = myDescriptionPanel.size.height
 
   //NOTE: Because checkbox doesn't have a margin property, it can't be set; need to add to group to add margin settings.
 
@@ -182,43 +150,22 @@ function buildWindow(myWindow) {
       myOptionsPanel.spacing = 50;
 
   var myOptionsAssignStyleGroup = myOptionsPanel.add("group");
-  var myAssignStyleCheckbox = myOptionsAssignStyleGroup.add("checkbox", undefined, "Apply a paragraph style to cleaned text.");
+  var myAssignStyleCheckbox = myOptionsAssignStyleGroup.add("checkbox", undefined, "Assign a paragraph style to cleaned text.");
       myOptionsAssignStyleGroup.alignment = "left"
       myOptionsAssignStyleGroup.margins = 10;
 
   var myOptionsOnlyShowListsGroup = myOptionsPanel.add("group");
-  var myShowListsCheckbox = myOptionsOnlyShowListsGroup.add("checkbox", undefined, "Only show Numbered or Bulleted List styles.");
+  var myShowListsCheckbox = myOptionsOnlyShowListsGroup.add("checkbox", undefined, "Only show numbered or bullet list styles.");
       myOptionsOnlyShowListsGroup.alignment = "right";
 
   // set default checkbox values to true
   myAssignStyleCheckbox.value = true;
-  // starting value determined by setOptions(). myShowListsCheckbox.value = false;
+  myShowListsCheckbox.value = true;
 
     var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
     var myDropdownGroup = myDropdownPanel.add("dropdownlist", undefined, []);
 
-   populateDropdown(myDropdownGroup, getParagraphsByName(myParagraphStyles)) // inital populate dropdown
-
-
-
-  function setOptions() { // enable/disable checkbox and dropdown panel based on value
-     if (myAssignStyleCheckbox.value == false) { // if assign style is false, disable showLists and dropdown panel
-       myShowListsCheckbox.enabled = false;
-       myDropdownPanel.enabled = false;
-     } else if ((myAssignStyleCheckbox.value == true) && (getListParagraphStylesByName(myParagraphStyles) == 0)) { // if assign style is true, but the document doesn't have any list styles, enable dropdown, but disable show lists checkbox
-       myShowListsCheckbox.enabled = false;
-       myDropdownPanel.enabled = true;
-     } else {
-       myShowListsCheckbox.enabled = true;
-       myDropdownPanel.enabled = true;
-     }
-
-   }
-
-  setOptions(); // run setOptions on window build
-  myAssignStyleCheckbox.onClick = function() { // run setOptions on click of myAssignStyleCheckbox
-    setOptions();
-  };
+   populateDropdown(myDropdownGroup, getListParagraphStylesByName(myParagraphStyles)) // inital populate dropdown
 
 
     myShowListsCheckbox.onClick = function() { // watch for changes to checkbox and change dropdown accordingly
@@ -253,15 +200,17 @@ function main() {
 
   var myWindow = new Window("dialog", myName); // create dialog window
 
-  buildWindow(myWindow);
+    function getListTypeSelection() {
+        for (var i = 0; i < myListTypeOptionsPanel.children.length; i++) {
+                if (myListTypeOptionsPanel.children[i].value == true) {
+                    var myListTypeSelection = myListTypeOptionsPanel.children[i].text;
+                    $.writeln(myListTypeOptionsPanel.children[i].text)
+                    break;
+                    }
+            return myListTypeSelection;
+        }
 
-  function getSelectedListType(targetRadioParentGroup) {
-    for (var i=0; i < targetRadioParentGroup.length; i++) {
-      if (targetRadioParentGroup.children[i].value == true) {
-        return targetRadioParentGroup.children[i].text;
-      }
-    }
-  }
+  buildWindow(myWindow, getListTypeSelection);
 
 
   if (myWindow.show() == true) { // if the dialog window is showing (ok is clicked)
@@ -269,18 +218,9 @@ function main() {
     if ((mySelection == "") || (mySelection == undefined)) { // make sure user has selected text
       alert("Please select the text you want to clean up, and run this script again.")
     } else {
-      // determine type of grep string to use based on list type
-      if (myListTypeSelection == "Numbered List") {
-        myChagneGrep(mySelection, grepFindStringNumbered, grepChangeString);
-      } else if (myListTypeSelection == "Bulleted List") {
-        myChangeGrep(mySelection, grepFindStringBullet, grepChangeString);
-      } else if (myListTypeSelection == "Lettered List") {
-        myChangeGrep(mySelection, grepFindStringAlphabet, grepChangeString)
-      } else {
-        alert("Error - can't determine list type.")
-        exit(0)
-      }
-
+        if (listTypeNumbered.value == true) {
+            $.writeln("asdfasdf")
+            }
 
 
       myChangeGrep(mySelection); // run grep to remove leading numbers
