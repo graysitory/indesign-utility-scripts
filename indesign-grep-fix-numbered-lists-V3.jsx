@@ -12,6 +12,8 @@ var grepFindStringBullet = {findWhat: "^\\W+(\\.)?(\\))?([ \\t])"};
 var grepFindStringLetter = {findWhat: "^\\[A-Za-z]+(\\.)?(\\))?([ \\t])"};
 var grepChangeString = {changeTo: ""};
 
+var myParagraphStyleToApply;
+
 if (app.documents.length > 0) {
   var myDoc = app.activeDocument;
 } else {
@@ -129,10 +131,8 @@ function buildWindow(myWindow) {
 
     var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
     var myDropdown = myDropdownPanel.add("dropdownlist", undefined, []);
-    
-    
-    populateDropdown(myDropdown, myGetAllListStyles())
-    //myAssignStyleCheckbox.onClick = setDropdownOptions(myAssignStyleCheckbox, myShowListsCheckbox)
+    populateDropdown(myDropdown, myGetAllDocumentStyles()); // populate dropdown with all document styles
+
 
     function setDropdownOptions(assignStyle, showLists) {
         
@@ -168,6 +168,17 @@ function buildWindow(myWindow) {
             setDropdownOptions(myAssignStyleCheckbox, myShowListsCheckbox);
         }
     
+    myDropdown.onChange = function() {     
+            var paragraphStyles = myDoc.paragraphStyles // get all document paragraph styles
+
+            if (myDropdown.selection !== null) {
+                myParagraphStyleToApply = paragraphStyles.itemByName(myDropdown.selection.toString()); // return paragraph style object by selected name
+                $.writeln(paragraphStyles.itemByName(myDropdown.selection.toString()))
+                } else {
+                 myParagraphStyleToApply = undefined;         
+                 }
+
+        }
             
          
 
@@ -203,7 +214,15 @@ function main() {
            if ((mySelection == "") || (mySelection == undefined)) {
                alert("Please select the text you want to clean up, and run this script again.")
                } else {
-                myChangeGrep(mySelection, grepFindStringBullet);
+                        
+          
+                    if (myParagraphStyleToApply !== undefined) {
+                         myChangeGrep(mySelection, grepFindStringBullet);
+                         mySelection.applyParagraphStyle(myParagraphStyleToApply); // apply paragraph style to selection.
+                        
+                        } else {
+                            myChangeGrep(mySelection, grepFindStringBullet);
+                            }
             }
     
         }
