@@ -80,7 +80,6 @@ function populateDropdown(targetDropdown, itemArr) { // populate the paragraph s
         for (var i = 0; i < itemArr.length; i++) {
                targetDropdown.add("item", itemArr[i]); // populate list with new values
             }
-
     }
 
 
@@ -116,27 +115,62 @@ function buildWindow(myWindow) {
                 myOptionsPanel.alignChildren = "left";
                 myOptionsPanel.orientation = "row";
                 myOptionsPanel.spacing = 50;
-                
-              var myOptionsAssignStyleGroup = myOptionsPanel.add("group");
-                     myOptionsAssignStyleGroup.alignment = "left"
-                      myOptionsAssignStyleGroup.margins = 10;
+                myOptionsPanel.margins = 10;
+      
                       
-                    var myAssignStyleCheckbox = myOptionsAssignStyleGroup.add("checkbox", undefined, "Apply a paragraph style to cleaned text.");
-
-                    var myOptionsOnlyShowListsGroup = myOptionsPanel.add("group");
-                    var myShowListsCheckbox = myOptionsOnlyShowListsGroup.add("checkbox", undefined, "Only show Numbered or Bulleted List styles.");
-                           myOptionsOnlyShowListsGroup.alignment = "right";
-
+                    var myAssignStyleCheckbox = myOptionsPanel.add("checkbox", undefined, "Apply a paragraph style to cleaned text.", {label: "assignStyle"});
+                    var myShowListsCheckbox = myOptionsPanel.add("checkbox", undefined, "Only show Numbered or Bulleted List styles.", {label: "showLists"});
+                    
+                    
+                    
   // set default checkbox values to true
   myAssignStyleCheckbox.value = true;
-  // starting value determined by setOptions(). myShowListsCheckbox.value = false;
+  myShowListsCheckbox.value = false;
 
     var myDropdownPanel = myWindow.add("panel", undefined, "Select Paragraph Style to Apply");
     var myDropdown = myDropdownPanel.add("dropdownlist", undefined, []);
     
     
     populateDropdown(myDropdown, myGetAllListStyles())
+    //myAssignStyleCheckbox.onClick = setDropdownOptions(myAssignStyleCheckbox, myShowListsCheckbox)
+
+    function setDropdownOptions(assignStyle, showLists) {
+        
+        if ((assignStyle.value == true) && (showLists.value == false)) { // if assignStyle is checked, but showLists is not
+            populateDropdown(myDropdown, myGetAllDocumentStyles()); // populate dropdown with all document styles
+            myDropdownPanel.enabled = true;
+            myShowListsCheckbox.enabled = true;
+            }
+        else if ((assignStyle.value == true) && (showLists.value == true)) { // if assignStyle and showLists are checked
+            populateDropdown(myDropdown, myGetAllListStyles());
+            myDropdownPanel.enabled = true;
+            myShowListsCheckbox.enabled = true;
+            }
+        else if ((assignStyle.value == false) && (showLists.value == false)) {
+             myDropdownPanel.enabled = false;
+             myShowListsCheckbox.enabled = false;
+            }
+        else {
+             populateDropdown(myDropdown, myGetAllDocumentStyles());
+             myDropdownPanel.enabled = true;
+             myShowListsCheckbox.enabled = true;
+            }
+           myWindow.update();
+        }
+   
+    
+    
+    myAssignStyleCheckbox.onClick = function() {
+            setDropdownOptions(myAssignStyleCheckbox, myShowListsCheckbox);
+        }
+    
+    myShowListsCheckbox.onClick = function() {
+            setDropdownOptions(myAssignStyleCheckbox, myShowListsCheckbox);
+        }
+    
+            
          
+
      // panel with notes/instructions    
       var myNotesPanel = myWindow.add("panel", undefined, "Notes")
              var myNotesPanelText = myNotesPanel.add("statictext", undefined, myNotes, {multiline: true});
