@@ -1,12 +1,12 @@
 ﻿
 
-var myVersion = "0.5";
+var myVersion = "0.6";
 var myName = "Vision Comma Cleaner - Version " + myVersion;
 var myDescription = "Removes the comma between project name and \"City, ST\" from resumes exported from Vision.";
 var myExampleFrom = "UC Berkeley, Li Ka Shing Center, Berkeley, CA";
 var myExampleTo = "UC Berkeley, Li Ka Shing Center Berkeley, CA"
 var myNotes = "Highlight the text you want to clean up and run this script. \r  - Only useful on project lists exported from Vision\u2014it might make commas disappear! \r  - International locations (Kashiwa, Japan) should be handled manually."
-var grepFindString = {findWhat: "(,)( \\w+)?( )(\\w+, \\w\\w(\\*)?$)"};
+var grepFindString = {findWhat: "(,)( \\w+)?( )(\\w+, \\w(\\.)?\\w(\\.)?(\\*)?$)"};
 var grepChangeString = {changeTo: "$2 $4"};
 
 
